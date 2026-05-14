@@ -563,6 +563,33 @@
           .forEach((s) => s.classList.remove("active"));
         document.getElementById(id).classList.add("active");
       }
+
+      // ============================================
+      // 개발자도구 / 우클릭 방지
+      // ============================================
+
+      // 우클릭 방지
+      document.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+        alert("퀴즈 진행 중에는 우클릭을 사용할 수 없습니다.");
+      });
+
+      // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U 방지
+      document.addEventListener("keydown", function (e) {
+        const key = e.key.toLowerCase();
+
+        if (
+          e.key === "F12" ||
+          (e.ctrlKey && e.shiftKey && key === "i") ||
+          (e.ctrlKey && e.shiftKey && key === "j") ||
+          (e.ctrlKey && e.shiftKey && key === "c") ||
+          (e.ctrlKey && key === "u")
+        ) {
+          e.preventDefault();
+          alert("퀴즈 진행 중에는 해당 기능을 사용할 수 없습니다.");
+          return false;
+        }
+      });
     </script>
   </body>
 </html>
