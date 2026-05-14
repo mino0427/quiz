@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>정보 퀴즈</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Combo flash -->
+    <div class="combo-flash" id="comboFlash"></div>
+
+    <div class="container">
+      <!-- ====== START SCREEN ====== -->
+      <div class="screen active" id="screenStart">
+        <div class="panel">
+          <div class="logo-area">
+            <div class="logo-tag"><h1>인공지능 퀴즈</h1></div>
+            <div class="logo-title">AI<span>.</span>QUIZ</div>
+            <div class="logo-sub">오늘 배운 것을 점검하라</div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-box">
+              <div class="info-box-label">QUESTIONS</div>
+              <div class="info-box-val" id="totalQDisplay">10</div>
+            </div>
+            <div class="info-box">
+              <div class="info-box-label">TIME / Q</div>
+              <div class="info-box-val" id="timeDisplay">30s</div>
+            </div>
+            <div class="info-box">
+              <div class="info-box-label">POINT / Q</div>
+              <div class="info-box-val">10</div>
+            </div>
+          </div>
+
+          <div class="name-input-wrap">
+            <label class="input-label" for="studentName"
+              >STUDENT ID / NAME</label
+            >
+            <input
+              type="text"
+              class="name-input"
+              id="studentName"
+              placeholder="이름 또는 학번을 입력하세요"
+              maxlength="20"
+            />
+          </div>
+
+          <button class="btn-primary" onclick="startGame()">
+            SYSTEM START
+          </button>
+        </div>
+      </div>
+
+      <!-- ====== QUIZ SCREEN ====== -->
+      <div class="screen" id="screenQuiz">
+        <div class="panel">
+          <div class="quiz-header">
+            <div class="quiz-header-left">
+              <div class="q-badge" id="qBadge">Q 01 / 10</div>
+              <div class="score-live" id="scoreLive">SCORE: 0</div>
+            </div>
+            <div class="timer-wrap">
+              <div class="timer-label">TIME</div>
+              <div class="timer-val" id="timerVal">30</div>
+            </div>
+          </div>
+
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+
+          <div class="question-num" id="qNum">QUESTION 1</div>
+          <div class="question-text" id="qText"></div>
+
+          <div class="options-grid" id="optionsGrid"></div>
+
+          <div class="feedback-banner" id="feedbackBanner"></div>
+          <button class="btn-next" id="btnNext" onclick="nextQuestion()">
+            NEXT QUESTION --&gt;
+          </button>
+        </div>
+      </div>
+
+      <!-- ====== RESULT SCREEN ====== -->
+      <div class="screen" id="screenResult">
+        <div class="panel">
+          <div class="result-header">
+            <div class="result-tag">QUIZ COMPLETE</div>
+            <div class="result-name" id="resultName"></div>
+            <div class="result-grade-msg" id="resultMsg"></div>
+          </div>
+
+          <div class="score-display">
+            <div class="score-ring">
+              <svg viewBox="0 0 160 160">
+                <circle class="score-ring-bg" cx="80" cy="80" r="70" />
+                <circle
+                  class="score-ring-fill"
+                  id="ringFill"
+                  cx="80"
+                  cy="80"
+                  r="70"
+                />
+              </svg>
+              <div class="score-inner">
+                <div class="score-num" id="finalScore">0</div>
+                <div class="score-denom" id="finalDenom">/ 10</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-box">
+              <div class="stat-label">CORRECT</div>
+              <div class="stat-val green" id="statCorrect">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">WRONG</div>
+              <div class="stat-val red" id="statWrong">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">ACCURACY</div>
+              <div class="stat-val yellow" id="statAcc">0%</div>
+            </div>
+          </div>
+
+          <div class="review-title">ANSWER REVIEW</div>
+          <div class="review-list" id="reviewList"></div>
+
+          <div class="btn-row">
+            <button class="btn-secondary" onclick="retryGame()">RETRY</button>
+            <button class="btn-primary btn-home" onclick="goHome()">
+              HOME
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ============================================
+      // QUESTION BANK - 선생님이 직접 수정하세요!
+      // ============================================
+      const QUESTION_BANK = [
+        {
+          q: "인간의 지능으로 할 수 있는 일들을 컴퓨터가 할 수 있도록 구현하는 기술이나 그 기술을 연구하는 학문 분야는?",
+          opts: ["인공지능", "머신러닝", "사물인터넷", "소프트웨어"],
+          ans: 0,
+          exp: "인공지능은 인간의 지능으로 할 수 있는 일들을 컴퓨터가 할 수 있도록 구현하는 기술이나 그 기술을 연구하는 학문 분야입니다.",
+        },
+        {
+          q: "사전에 프로그래밍이 된 규칙과 알고리즘에 따라 작동하는 소프트웨어는?",
+          opts: [
+            "소프트콘",
+            "인공지능 소프트웨어",
+            "일반 소프트웨어",
+            "웨어하우스",
+          ],
+          ans: 2,
+          exp: "일반 소프트웨어는 사전에 프로그래밍이 된 규칙과 알고리즘에 따라 작동하는 소프트웨어입니다.",
+        },
+        {
+          q: "작동 방식이 정해진 알고리즘으로 제한되지 않으며 다양한 상황에서 자율적이고 유연하게 문제를 해결하는 소프트웨어는?",
+          opts: [
+            "일반 소프트웨어",
+            "운영체제(OS)",
+            "인공지능 소프트웨어",
+            "그레이웨어",
+          ],
+          ans: 2,
+          exp: "인공지능 소프트웨어는 다양한 상황에서 자율적이고 유연하게 문제를 해결합니다.",
+        },
+        {
+          q: "텍스트, 이미지, 음성 등 다양한 종류의 컨텐츠를 스스로 만들어 내거나 변형하는 인공지능 기술은?",
+          opts: [
+            "챗봇 서비스",
+            "생성형 인공지능",
+            "환경보호 인공지능",
+            "데이터",
+          ],
+          ans: 1,
+          exp: "생성형 인공지능은 다양한 종류의 컨텐츠를 스스로 만들어 내거나 변형하는 인공지능 기술입니다.",
+        },
+        {
+          q: "인공지능 시스템이 사용된 사례로 알맞지 <strong><u>않은</u></strong> 것은?",
+          opts: [
+            "음성 인식 AI 스피커",
+            "자율주행 자동차",
+            "영상 추천 서비스",
+            "사람이 다가가면 센서로 열리는 자동문",
+          ],
+          ans: 3,
+          exp: "자동문은 사람이 가까이 오면 센서가 감지하여 문을 여는 단순 자동화 장치입니다.",
+        },
+        {
+          q: "튜링테스트에 대한 내용으로 옳지 <strong><u>않은</u></strong> 것은?",
+          opts: [
+            "1950년 앨런 튜링에 의해 개발되었다.",
+            "기계가 인간과 구별되는지, 구별되지 않는지를 확인하는 시험이다.",
+            "실험에서 인간이 어느 것이 기계인지 판단하지 못하면 그 기계는 인간보다 높은 지능으로 간주한다.",
+            "인간이 질문하면 기계가 인간과 같은 반응의 답변을 하면 인간과 구별할 수 없다고 판단한다.",
+          ],
+          ans: 2,
+          exp: "교과서 170쪽의 정보더하기를 확인하세요.",
+        },
+        {
+          q: "오늘 학습한 모델에 대한 설명으로 가장 적절한 것은?",
+          opts: [
+            "예술, 홍보, 판촉을 목적으로 자세를 취하는 업종이다.",
+            "실제 물건을 만들기 전에 미리 제작한 작은 모형이나 기준이 되는 본보기이다.",
+            "우리가 알려준 정보와 패턴으로 학습하고, 이를 바탕으로 새로운 문제를 해결하거나 예측하는 것이다.",
+            "인공지능 시스템에서는 모델을 사용하지 않는다.",
+          ],
+          ans: 2,
+          exp: "모델은 우리가 알려준 정보와 패턴으로 학습하고, 이를 바탕으로 새로운 문제를 해결하거나 예측하는 것입니다.",
+        },
+        {
+          q: "인공지능의 특성으로 옳은 것은?",
+          opts: [
+            "사람이 직접 모든 명령을 입력해야만 동작할 수 있다.",
+            "데이터를 수집하여 가장 효율적인 계획을 세워 실행한다.",
+            "정해진 명령만 반복하며 새로운 상황을 판단하지 않는다.",
+            "인공지능은 항상 옳은 답을 도출하기 때문에 신뢰도가 높다.",
+          ],
+          ans: 1,
+          exp: "인공지능은 데이터를 분석하고 학습하여 가장 효율적인 계획을 세워 실행합니다.",
+        },
+        {
+          q: "괄호 안에 들어갈 말로 가장 알맞은 것은?<br>인공지능 로봇 청소기는 내장된 카메라와 다양한 센서를 이용하여 주변 환경을 감지하여 사람의 도움 없이 (  )으로 움직인다.",
+          opts: ["일회적", "수동적", "자율적", "제한적"],
+          ans: 2,
+          exp: "인공지능 로봇 청소기는 내장된 카메라와 다양한 센서를 이용해 주변 환경을 감지하여 사람의 도움 없이 자율적으로 움직입니다.",
+        },
+        {
+          q: "영상 자료에서 벽돌깨기 게임을 학습한 인공지능이 가장 높은 실력을 보인 학습 시간대는?",
+          opts: ["10분", "60분", "120분", "240분"],
+          ans: 3,
+          exp: "인공지능은 충분한 학습시간과 데이터로 학습할 때 점점 더 효율적인 전략을 찾습니다.",
+        },
+        {
+          q: "오늘 학습한 주제는?",
+          opts: ["인공지능", "데이터", "디지털 윤리", "알고리즘"],
+          ans: 0,
+          exp: "이거 틀리면 수업 안들은거임",
+        },
+      ];
+
+      // ============================================
+      // GAME STATE
+      // ============================================
+      const GAME_CONFIG = {
+        time: 30, // normal 기준: 문제당 30초
+        count: 10, // normal 기준: 총 10문제
+      };
+
+      let state = {
+        name: "",
+        timePerQ: GAME_CONFIG.time,
+        totalQ: GAME_CONFIG.count,
+        questions: [],
+        current: 0,
+        score: 0,
+        results: [],
+        timer: null,
+        timeLeft: GAME_CONFIG.time,
+        answered: false,
+        combo: 0,
+      };
+
+      function shuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      function startGame() {
+        const nameInput = document.getElementById("studentName").value.trim();
+        if (!nameInput) {
+          document.getElementById("studentName").focus();
+          document.getElementById("studentName").style.borderColor =
+            "var(--neon-red)";
+          document.getElementById("studentName").style.boxShadow =
+            "0 0 15px rgba(255,0,60,0.3)";
+          setTimeout(() => {
+            document.getElementById("studentName").style.borderColor = "";
+            document.getElementById("studentName").style.boxShadow = "";
+          }, 1500);
+          return;
+        }
+
+        state.name = nameInput;
+        state.timePerQ = GAME_CONFIG.time;
+        state.totalQ = Math.min(GAME_CONFIG.count, QUESTION_BANK.length);
+        state.questions = shuffle(QUESTION_BANK).slice(0, state.totalQ);
+        state.current = 0;
+        state.score = 0;
+        state.results = [];
+        state.combo = 0;
+
+        showScreen("screenQuiz");
+        renderQuestion();
+      }
+
+      function renderQuestion() {
+        const q = state.questions[state.current];
+        const total = state.totalQ;
+        const idx = state.current;
+
+        state.answered = false;
+        state.timeLeft = state.timePerQ;
+
+        document.getElementById("qBadge").textContent =
+          "Q " +
+          String(idx + 1).padStart(2, "0") +
+          " / " +
+          String(total).padStart(2, "0");
+        document.getElementById("scoreLive").textContent =
+          "SCORE: " + state.score;
+        document.getElementById("qNum").textContent = "QUESTION " + (idx + 1);
+        document.getElementById("qText").innerHTML = q.q;
+        document.getElementById("progressFill").style.width =
+          (idx / total) * 100 + "%";
+        document.getElementById("timerVal").textContent = state.timeLeft;
+        document.getElementById("timerVal").className = "timer-val";
+
+        const grid = document.getElementById("optionsGrid");
+        grid.innerHTML = "";
+        const letters = ["A", "B", "C", "D"];
+        q.opts.forEach((opt, i) => {
+          const btn = document.createElement("button");
+          btn.className = "option-btn";
+          btn.innerHTML =
+            '<span class="option-letter">' +
+            letters[i] +
+            "</span><span>" +
+            opt +
+            "</span>";
+          btn.onclick = () => selectAnswer(i);
+          grid.appendChild(btn);
+        });
+
+        const fb = document.getElementById("feedbackBanner");
+        fb.style.display = "none";
+        fb.className = "feedback-banner";
+
+        document.getElementById("btnNext").style.display = "none";
+
+        clearInterval(state.timer);
+        state.timer = setInterval(tickTimer, 1000);
+      }
+
+      function tickTimer() {
+        state.timeLeft--;
+        const el = document.getElementById("timerVal");
+        el.textContent = state.timeLeft;
+
+        if (state.timeLeft <= 5) {
+          el.className = "timer-val danger";
+        }
+
+        if (state.timeLeft <= 0) {
+          clearInterval(state.timer);
+          if (!state.answered) {
+            timeOut();
+          }
+        }
+      }
+
+      function timeOut() {
+        state.answered = true;
+        const q = state.questions[state.current];
+        state.results.push({
+          q: q.q,
+          correct: false,
+          correctAns: q.opts[q.ans],
+          chosen: "시간 초과",
+        });
+        state.combo = 0;
+
+        const btns = document.querySelectorAll(".option-btn");
+        btns.forEach((b) => (b.disabled = true));
+        btns[q.ans].classList.add("correct");
+
+        showFeedback(false, q.opts[q.ans], q.exp, true);
+        document.getElementById("btnNext").style.display = "block";
+      }
+
+      function selectAnswer(chosen) {
+        if (state.answered) return;
+        state.answered = true;
+        clearInterval(state.timer);
+
+        const q = state.questions[state.current];
+        const isCorrect = chosen === q.ans;
+
+        const btns = document.querySelectorAll(".option-btn");
+        btns.forEach((b) => (b.disabled = true));
+
+        if (isCorrect) {
+          btns[chosen].classList.add("correct");
+          state.score += 10;
+          state.combo++;
+          if (state.combo >= 3) showCombo(state.combo);
+          state.results.push({
+            q: q.q,
+            correct: true,
+            correctAns: q.opts[q.ans],
+            chosen: q.opts[chosen],
+          });
+        } else {
+          btns[chosen].classList.add("wrong");
+          btns[q.ans].classList.add("correct");
+          state.combo = 0;
+          state.results.push({
+            q: q.q,
+            correct: false,
+            correctAns: q.opts[q.ans],
+            chosen: q.opts[chosen],
+          });
+        }
+
+        showFeedback(isCorrect, q.opts[q.ans], q.exp, false);
+        document.getElementById("scoreLive").textContent =
+          "SCORE: " + state.score;
+        document.getElementById("btnNext").style.display = "block";
+      }
+
+      function showFeedback(correct, ans, exp, timeout) {
+        const fb = document.getElementById("feedbackBanner");
+        if (timeout) {
+          fb.className = "feedback-banner wrong-fb";
+          fb.innerHTML =
+            '<strong>시간 초과!</strong><div class="feedback-correct-ans">정답: ' +
+            ans +
+            '</div><div class="feedback-exp feedback-exp-timeout">' +
+            exp +
+            "</div>";
+        } else if (correct) {
+          fb.className = "feedback-banner correct-fb";
+          fb.innerHTML =
+            '<strong>정답입니다! +10점</strong><div class="feedback-exp feedback-exp-correct">' +
+            exp +
+            "</div>";
+        } else {
+          fb.className = "feedback-banner wrong-fb";
+          fb.innerHTML =
+            '<strong>틀렸습니다.</strong><div class="feedback-correct-ans">정답: ' +
+            ans +
+            '</div><div class="feedback-exp feedback-exp-wrong">' +
+            exp +
+            "</div>";
+        }
+        fb.style.display = "block";
+      }
+
+      function showCombo(n) {
+        const el = document.getElementById("comboFlash");
+        el.textContent = n + " COMBO!";
+        el.classList.remove("show", "combo-cyan", "combo-yellow");
+        el.classList.add(n >= 5 ? "combo-yellow" : "combo-cyan");
+        void el.offsetWidth;
+        el.classList.add("show");
+      }
+
+      function nextQuestion() {
+        state.current++;
+        if (state.current >= state.totalQ) {
+          showResult();
+        } else {
+          renderQuestion();
+        }
+      }
+
+      function showResult() {
+        clearInterval(state.timer);
+        showScreen("screenResult");
+
+        const correct = state.results.filter((r) => r.correct).length;
+        const wrong = state.results.filter((r) => !r.correct).length;
+        const acc = Math.round((correct / state.totalQ) * 100);
+
+        document.getElementById("resultName").textContent = state.name;
+
+        let msg = "";
+        if (acc >= 90) msg = "완벽합니다! 오늘 수업을 완전히 이해했군요.";
+        else if (acc >= 70) msg = "잘했습니다! 조금만 더 복습하면 완벽해요.";
+        else if (acc >= 50)
+          msg = "절반 이상 이해했어요. 오답을 다시 확인해 보세요.";
+        else msg = "오늘 배운 내용을 다시 한 번 복습해 보세요!";
+        document.getElementById("resultMsg").textContent = msg;
+
+        document.getElementById("finalScore").textContent = state.score;
+        document.getElementById("finalDenom").textContent =
+          "/ " + state.totalQ * 10;
+        document.getElementById("statCorrect").textContent = correct;
+        document.getElementById("statWrong").textContent = wrong;
+        document.getElementById("statAcc").textContent = acc + "%";
+
+        // Ring animation
+        const circumference = 2 * Math.PI * 70; // ~439.8
+        const offset = circumference * (1 - correct / state.totalQ);
+        setTimeout(() => {
+          document.getElementById("ringFill").style.strokeDashoffset = offset;
+          if (acc < 50)
+            document.getElementById("ringFill").style.stroke =
+              "var(--neon-red)";
+          else if (acc < 80)
+            document.getElementById("ringFill").style.stroke =
+              "var(--neon-yellow)";
+        }, 200);
+
+        // Review list
+        const list = document.getElementById("reviewList");
+        list.innerHTML = "";
+        state.results.forEach((r, i) => {
+          const item = document.createElement("div");
+          item.className = "review-item " + (r.correct ? "r-ok" : "r-fail");
+          item.innerHTML =
+            '<div class="review-icon ' +
+            (r.correct ? "ok" : "fail") +
+            '">' +
+            (r.correct ? "O" : "X") +
+            "</div>" +
+            "<div>" +
+            '<div class="review-q">Q' +
+            (i + 1) +
+            ". " +
+            r.q.substring(0, 45) +
+            (r.q.length > 45 ? "..." : "") +
+            "</div>" +
+            (!r.correct
+              ? '<div class="review-ans">정답: ' +
+                r.correctAns +
+                (r.chosen !== "시간 초과"
+                  ? " / 내 답: " + r.chosen
+                  : " (시간초과)") +
+                "</div>"
+              : "") +
+            "</div>";
+          list.appendChild(item);
+        });
+      }
+
+      function retryGame() {
+        clearInterval(state.timer);
+        startGame();
+      }
+
+      function goHome() {
+        clearInterval(state.timer);
+        showScreen("screenStart");
+      }
+
+      function showScreen(id) {
+        document
+          .querySelectorAll(".screen")
+          .forEach((s) => s.classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+      }
+    </script>
+  </body>
+</html>
